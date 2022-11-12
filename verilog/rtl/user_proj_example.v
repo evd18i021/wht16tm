@@ -104,7 +104,7 @@ module user_proj_example #(
     assign clk = (~la_oenb[64]) ? la_data_in[64]: wb_clk_i;
     assign rst = (~la_oenb[65]) ? la_data_in[65]: wb_rst_i;
 
-    counter #(
+    /*counter #(
         .BITS(BITS)
     ) counter(
         .clk(clk),
@@ -117,11 +117,215 @@ module user_proj_example #(
         .la_write(la_write),
         .la_input(la_data_in[63:32]),
         .count(count)
-    );
+    );*/
+    
+    wht16tm dut(.Y(count[11:0]),.X(rdata[7:0]),.sin(rdata[3:0]),.sout(rdata[3:0]));
 
 endmodule
 
-module counter #(
+module wht16tm#
+    ( parameter bi = 7)
+    (
+     output signed [bi+4:0] Y,//16bit hdmd tx
+     input signed [bi:0] X,
+     input [3:0] sin,sout
+    );
+ wire signed [bi:0]x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15;
+ wire signed [bi+4:0]y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15;
+   
+demux16 a1(x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,sin,X);
+wht16 a2 (y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15,x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15);
+mux16 a3 (Y,y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15,sout);
+endmodule
+
+module demux16#
+  ( parameter bi = 7)
+  (  
+    output reg signed [bi:0]x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15,
+    input [3:0]s,
+    input signed [bi:0]in
+  );
+  
+always@(*)
+begin
+case(s)
+4'b0000 : x0 = in; 
+4'b0001 : x1 = in; 
+4'b0010 : x2 = in; 
+4'b0011 : x3 = in; 
+4'b0100 : x4 = in; 
+4'b0101 : x5 = in; 
+4'b0110 : x6 = in; 
+4'b0111 : x7 = in; 
+4'b1000 : x8 = in; 
+4'b1001 : x9 = in; 
+4'b1010 : x10 = in; 
+4'b1011 : x11 = in; 
+4'b1100 : x12 = in; 
+4'b1101 : x13 = in; 
+4'b1110 : x14 = in; 
+4'b1111 : x15 = in; 
+endcase
+end
+    
+endmodule
+
+module mux16#
+  ( parameter bi = 7)
+  (  
+    output reg signed [bi+4:0]out,
+    input signed [bi+4:0]y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15,
+    input [3:0]s
+  );
+    
+always@(*)
+begin
+case(s)
+4'b0000 : out = y0 ;                  
+4'b0001 : out = y1 ;                  
+4'b0010 : out = y2 ;                   
+4'b0011 : out = y3 ;                  
+4'b0100 : out = y4 ;                  
+4'b0101 : out = y5 ;                  
+4'b0110 : out = y6 ;                  
+4'b0111 : out = y7 ;                 
+4'b1000 : out = y8 ;                  
+4'b1001 : out = y9 ;                  
+4'b1010 : out = y10;                 
+4'b1011 : out = y11;                  
+4'b1100 : out = y12;                 
+4'b1101 : out = y13;                 
+4'b1110 : out = y14;                 
+4'b1111 : out = y15; 
+endcase
+end
+    
+endmodule  
+  
+module wht16#
+    ( parameter bi = 7)
+    (
+    output signed [bi+4:0]y0,y1,y2,y3,y4,y5,y6,y7,y8,y9,y10,y11,y12,y13,y14,y15,//m+log(n)_base2
+    input signed [bi:0]x0,x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,x11,x12,x13,x14,x15
+    );
+
+wire signed [bi+1:0]t0,t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11,t12,t13,t14,t15;//temporary stage 1  
+wire signed [bi+4:0]pf0,pf1,pf2,pf3,pf4,pf5,pf6,pf7,pf8,pf9,pf10,pf11,pf12,pf13,pf14,pf15;
+
+add #(bi+1) sa0(t0,x0,x8,1'b0);
+add #(bi+1) sa1(t1,x1,x9,1'b0);
+add #(bi+1) sa2(t2,x2,x10,1'b0);
+add #(bi+1) sa3(t3,x3,x11,1'b0);
+add #(bi+1) sa4(t4,x4,x12,1'b0);
+add #(bi+1) sa5(t5,x5,x13,1'b0);
+add #(bi+1) sa6(t6,x6,x14,1'b0);
+add #(bi+1) sa7(t7,x7,x15,1'b0);
+
+add #(bi+1) sb0(t8,x0,x8,1'b1);
+add #(bi+1) sb1(t9,x1,x9,1'b1);
+add #(bi+1) sb2(t10,x2,x10,1'b1);
+add #(bi+1) sb3(t11,x3,x11,1'b1);
+add #(bi+1) sb4(t12,x4,x12,1'b1);
+add #(bi+1) sb5(t13,x5,x13,1'b1);
+add #(bi+1) sb6(t14,x6,x14,1'b1);
+add #(bi+1) sb7(t15,x7,x15,1'b1);
+
+wht8 d80(pf0,pf1,pf2,pf3,pf4,pf5,pf6,pf7,t0,t1,t2,t3,t4,t5,t6,t7);
+wht8 d81(pf8,pf9,pf10,pf11,pf12,pf13,pf14,pf15,t8,t9,t10,t11,t12,t13,t14,t15);
+
+assign y0 = pf0;
+assign y1 = pf4;
+assign y2 = pf6;
+assign y3 = pf8;
+assign y4 = pf10;
+assign y5 = pf12;
+assign y6 = pf14;
+assign y7 = pf2;
+
+assign y8 = pf3;
+assign y9 = pf15;
+assign y10 = pf13;
+assign y11 = pf11;
+assign y12 = pf9;
+assign y13 = pf7;
+assign y14 = pf5;
+assign y15 = pf1;
+
+endmodule
+
+module wht8#
+    ( parameter bi = 8)
+    (
+    output signed [bi+3:0]y0,y1,y2,y3,y4,y5,y6,y7,
+    input signed [bi:0]x0,x1,x2,x3,x4,x5,x6,x7
+    );
+    
+wire signed [bi+1:0]t0,t1,t2,t3,t4,t5,t6,t7;//temporary stage 1
+
+add# (bi+1) ea0(t0,x0,x4,1'b0);
+add# (bi+1) ea1(t1,x1,x5,1'b0);
+add# (bi+1) ea2(t2,x2,x6,1'b0);
+add# (bi+1) ea3(t3,x3,x7,1'b0);
+      
+add# (bi+1) eb0(t4,x0,x4,1'b1);
+add# (bi+1) eb1(t5,x1,x5,1'b1);
+add# (bi+1) eb2(t6,x2,x6,1'b1);
+add# (bi+1) ec3(t7,x3,x7,1'b1);
+
+wht4 d40(y0,y1,y2,y3,t0,t1,t2,t3);
+wht4 d41(y4,y5,y6,y7,t4,t5,t6,t7);
+
+endmodule
+
+module wht4#
+    ( parameter bi = 9)
+    (
+    output signed [bi+2:0]y0,y1,y2,y3,
+    input signed [bi:0]x0,x1,x2,x3
+    );
+    
+wire signed [bi+1:0]t0,t1,t2,t3;//temporary stages in stage1
+
+//stage1
+add #(bi+1) fa0(t0,x0,x2,1'b0);
+add #(bi+1) fa1(t1,x1,x3,1'b0);
+        
+add #(bi+1) fb2(t2,x0,x2,1'b1);
+add #(bi+1) fb3(t3,x1,x3,1'b1);
+
+//stage2 final
+wht2 d0(y0,y1,t0,t1);
+wht2 d1(y2,y3,t2,t3);
+
+endmodule
+
+module wht2(A,B,a,b);
+
+parameter bi = 10;
+
+output signed [bi+1:0] A,B;
+input signed [bi:0] a,b;
+
+wire signed [bi+1:0] A1,B1;
+
+add #(bi+1) t0(A,a,b,1'b0);
+add #(bi+1) t1(B,a,b,1'b1);
+
+endmodule
+
+module add#
+    (parameter  bits = 4)
+    (sum,p,q,mode);
+
+output signed [bits:0] sum;
+input signed [bits-1:0] p,q;
+input mode;
+
+assign sum[bits:0] = mode ? p-q : p+q;
+
+endmodule
+
+/*module counter #(
     parameter BITS = 32
 )(
     input clk,
@@ -161,5 +365,5 @@ module counter #(
         end
     end
 
-endmodule
+endmodule*/
 `default_nettype wire
