@@ -1,4 +1,6 @@
-# 16-point-Hdmd-Tx
+# 16-point-Walsh-Tx
+
+Walsh Transform is based on Hadamard
 
 # Hadamard Transform
 Hadamard transform is non-sinusoidal, orthogonal transformation techniques. A signal is composed of basic functions like harmonics in Fourier Transform.This signal can be divided using these fast transforms. In contrast to the Fourier transform, which uses Nlog2N multiplication and addition and is faster, Hadamard Transform uses Nlog2N addition or subtraction.
